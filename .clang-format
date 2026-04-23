@@ -1,0 +1,16 @@
+---
+Language:        Cpp
+BasedOnStyle:    Google
+
+IndentWidth:     4
+TabWidth:        4
+UseTab:          Never
+
+PointerAlignment: Right
+
+AllowShortFunctionsOnASingleLine: Inline
+
+AccessModifierOffset: -4
+
+SortIncludes: true
+...
