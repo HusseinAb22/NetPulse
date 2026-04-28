@@ -17,6 +17,7 @@ int main() {
     int bind_result = bind(server_sock.getFd(), reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr));
     if (bind_result < 0) {
         std::cerr << "Error binding socket" << std::endl;
+        return 1;
     }
 
     listen(server_sock.getFd(), 10);
