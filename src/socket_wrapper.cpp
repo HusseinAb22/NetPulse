@@ -1,12 +1,6 @@
-//
-// Created by husse on 4/28/2026.
-//
-
 #include "../include/socket_wrapper.h"
 
-SocketWrapper::SocketWrapper() {
-
-}
+SocketWrapper::SocketWrapper() = default;
 SocketWrapper::~SocketWrapper() {
     if (this->fd_!=-1) {
         close(fd_);
@@ -31,4 +25,12 @@ SocketWrapper& SocketWrapper::operator=(SocketWrapper &&other) noexcept {
 
 int SocketWrapper::getFd() const {
     return fd_;
+}
+
+bool SocketWrapper::operator==(const int other)const noexcept{
+    return fd_ == other;
+}
+
+SocketWrapper::operator bool() const noexcept {
+    return fd_ != -1;
 }

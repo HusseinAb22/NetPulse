@@ -28,6 +28,10 @@ public:
 
     // Accessors
     [[nodiscard]] int getFd() const;
+
+    bool operator==(int other)const noexcept;
+
+    explicit operator bool() const noexcept;
 };
 
 #endif //NETPULSE_SOCKET_WRAPPER_H
