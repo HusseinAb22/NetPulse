@@ -1,0 +1,26 @@
+name: C++ CI Build
+
+# Trigger the action on push to main or any Pull Request targeting main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    # Run on the latest Ubuntu environment (similar to your WSL setup)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download your code into the runner
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Configure CMake (Creates the build directory)
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+
+      # Step 3: Compile the code
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build
