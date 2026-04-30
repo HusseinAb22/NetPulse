@@ -4,6 +4,22 @@
 
 
 
-client_session::client_session(SocketWrapper client_sock, ThreadSafeQueue<std::string>& server_inbox): client_sock_(std::move(client_sock)), server_inbox_(server_inbox), writer_thread_([this]()  {writeLoop(); }){
+ClientSession::ClientSession(SocketWrapper client_sock, ThreadSafeQueue<std::string>& server_inbox): client_sock_(std::move(client_sock)), server_inbox_(server_inbox), writer_thread_([this]()  {writeLoop(); }){
     std::cout << "new Client Session created!" << std::endl;
+}
+
+void ClientSession::deliver(const std::string &msg){
+    this->outbox_.push(msg);
+}
+
+void ClientSession::writeLoop() {
+    while(true) {
+        std::string msg = this->outbox_.pop();
+
+        ssize_t bytes_sent = send(client_sock_.getFd(), msg.c_str(), msg.length(),0);
+        if(bytes_sent < 0) {
+            std::cerr << "ClientSession: Client send error or client disconnected "  << std::endl;
+            break;
+        }
+    }
 }

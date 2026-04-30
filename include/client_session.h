@@ -7,7 +7,7 @@
 #include "socket_wrapper.h"
 #include "thread_safe_queue.h"
 
-class client_session {
+class ClientSession {
 private:
     SocketWrapper client_sock_;
 
@@ -19,11 +19,11 @@ private:
     void writeLoop();
 
 public:
-    client_session(SocketWrapper client_sock, ThreadSafeQueue<std::string>& server_inbox);
-    ~client_session()=default;
+    ClientSession(SocketWrapper client_sock, ThreadSafeQueue<std::string>& server_inbox);
+    ~ClientSession()=default;
 
-    client_session(const client_session&)=delete;
-    client_session& operator=(const client_session&)=delete;
+    ClientSession(const ClientSession&)=delete;
+    ClientSession& operator=(const ClientSession&)=delete;
 
     void readLoop();
     void deliver(const std::string& msg);
