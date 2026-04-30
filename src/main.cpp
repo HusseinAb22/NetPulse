@@ -2,6 +2,20 @@
 #include "../include/socket_wrapper.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <thread>
+
+ void handle_client(const SocketWrapper &client_sock) {
+     char buffer[1024];
+     while (true) {
+         const ssize_t bytes = recv(client_sock.getFd(), buffer, sizeof(buffer), 0);
+         if (bytes <= 0) {
+             std::cerr << "Error reading from socket" << std::endl;
+             break;
+         }
+         send(client_sock.getFd(), buffer, bytes, 0);
+
+     }
+ }
 
 int main() {
     const SocketWrapper server_sock(socket(AF_INET, SOCK_STREAM, 0));
@@ -9,7 +23,7 @@ int main() {
         std::cerr << "Error creating socket" << std::endl;
         return 1;
     }
-    struct sockaddr_in server_addr = {};
+    sockaddr_in server_addr = {};
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(9000);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -23,20 +37,15 @@ int main() {
     listen(server_sock.getFd(), 10);
     std::cout << "server listening on port " << ntohs(server_addr.sin_port) << std::endl;
 
-    const SocketWrapper client_sock(accept(server_sock.getFd(),nullptr,nullptr));
-    if (!client_sock) {
-        std::cerr << "Error creating socket" << std::endl;
-    }
 
-    char buffer[1024];
     while (true) {
-        const ssize_t bytes = recv(client_sock.getFd(), buffer, sizeof(buffer), 0);
-        if (bytes <= 0) {
-            std::cerr << "Error reading from socket" << std::endl;
-            break;
+        SocketWrapper client_sock(accept(server_sock.getFd(),nullptr,nullptr));
+        if (!client_sock) {
+            std::cerr << "Error creating socket" << std::endl;
+            continue;
         }
-        send(client_sock.getFd(), buffer, bytes, 0);
-
+        std::jthread client_thread(handle_client, std::move(client_sock));
+        client_thread.detach();
     }
     return 0;
 }
