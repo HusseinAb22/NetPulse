@@ -26,4 +26,4 @@ jobs:
         run: cmake --build ${{github.workspace}}/build
 
       - name: Run Tests
-        run: ./build/test_thread_safe_queue
+        run: ./build/test_queue
