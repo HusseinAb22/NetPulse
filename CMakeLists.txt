@@ -17,6 +17,13 @@ else()
     message(WARNING "clang-tidy not found in PATH. Skipping static analysis during build.")
 endif()
 
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        release-1.12.1
+)
+FetchContent_MakeAvailable(googletest)
 
 add_executable(netpulse src/main.cpp
         src/socket_wrapper.cpp
@@ -26,3 +33,6 @@ add_executable(netpulse src/main.cpp
         include/client_session.h
         include/message.h)
 
+add_executable(test_queue
+        tests/test_thread_safe_queue.cpp)
+target_link_libraries(test_queue gtest_main gtest pthread)
