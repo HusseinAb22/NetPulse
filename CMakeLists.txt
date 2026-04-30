@@ -20,5 +20,6 @@ endif()
 
 add_executable(netpulse src/main.cpp
         src/socket_wrapper.cpp
-        include/socket_wrapper.h)
+        include/socket_wrapper.h
+        include/thread_safe_queue.h)
 
