@@ -3,21 +3,34 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <thread>
+#include "message.h"
+#include "thread_safe_queue.h"
+#include <vector>
+#include "client_session.h"
+#include <memory>
 
- void handle_client(const SocketWrapper &client_sock) {
-     char buffer[1024];
-     while (true) {
-         const ssize_t bytes = recv(client_sock.getFd(), buffer, sizeof(buffer), 0);
-         if (bytes <= 0) {
-             std::cerr << "Error reading from socket" << std::endl;
-             break;
-         }
-         send(client_sock.getFd(), buffer, bytes, 0);
+ThreadSafeQueue<Message> global_inbox;
+std::vector<std::shared_ptr<ClientSession>> active_clients;
+std::mutex clients_mutex;
 
-     }
- }
+void router_loop() {
+    while (true) {
+        auto msg = global_inbox.pop();
+        std::lock_guard lock(clients_mutex);
+        for (const auto &client : active_clients) {
+            if (msg.sender_fd == client->getClientSock()->getFd() ) {
+            }
+            else {
+                client->deliver(msg);
+            }
+        }
+    }
+}
 
 int main() {
+    std::jthread client_delivery_thread(router_loop);
+    client_delivery_thread.detach();
+
     const SocketWrapper server_sock(socket(AF_INET, SOCK_STREAM, 0));
     if (!server_sock) {
         std::cerr << "Error creating socket" << std::endl;
@@ -41,10 +54,19 @@ int main() {
     while (true) {
         SocketWrapper client_sock(accept(server_sock.getFd(),nullptr,nullptr));
         if (!client_sock) {
-            std::cerr << "Error creating socket" << std::endl;
+            std::cerr << "Error accepting client" << std::endl;
             continue;
         }
-        std::jthread client_thread(handle_client, std::move(client_sock));
+
+        auto session= std::make_shared<ClientSession>(std::move(client_sock), global_inbox);
+
+        {
+            std::lock_guard lock(clients_mutex);
+            active_clients.push_back(session);
+        }
+        std::jthread client_thread([session] {
+            session->readLoop();
+        });
         client_thread.detach();
     }
     return 0;

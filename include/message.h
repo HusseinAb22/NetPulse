@@ -7,6 +7,6 @@
 #include <string>
 struct Message {
   int sender_fd;
-  std::string text;
+  const std::string text;
 };
 #endif //NETPULSE_MESSAGE_H

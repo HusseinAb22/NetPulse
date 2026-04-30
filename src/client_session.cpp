@@ -4,19 +4,19 @@
 
 
 
-ClientSession::ClientSession(SocketWrapper client_sock, ThreadSafeQueue<std::string>& server_inbox): client_sock_(std::move(client_sock)), server_inbox_(server_inbox), writer_thread_([this]()  {writeLoop(); }){
+ClientSession::ClientSession(SocketWrapper client_sock, ThreadSafeQueue<Message>& server_inbox): client_sock_(std::move(client_sock)), server_inbox_(server_inbox), writer_thread_([this]()  {writeLoop(); }){
     std::cout << "new Client Session created!" << std::endl;
 }
 
-void ClientSession::deliver(const std::string &msg){
+void ClientSession::deliver(const Message &msg){
     this->outbox_.push(msg);
 }
 
 void ClientSession::writeLoop() {
     while(true) {
-        std::string msg = this->outbox_.pop();
+        auto msg = this->outbox_.pop();
 
-        ssize_t bytes_sent = send(client_sock_.getFd(), msg.c_str(), msg.length(),0);
+        ssize_t bytes_sent = send(client_sock_.getFd(), msg.text.c_str(), msg.text.length(),0);
         if(bytes_sent < 0) {
             std::cerr << "ClientSession: Client send error or client disconnected "  << std::endl;
             break;
@@ -32,7 +32,12 @@ void ClientSession::readLoop(){
             std::cerr << "Error reading from socket" << std::endl;
             break;
         }
-        std::string message(buffer, bytes);
-        this->server_inbox_.push(message);
+        const std::string message(buffer, bytes);
+        Message msg{client_sock_.getFd(),message};
+        this->server_inbox_.push(msg);
     }
+}
+
+const SocketWrapper *ClientSession::getClientSock() const{
+    return &this->client_sock_;
 }
