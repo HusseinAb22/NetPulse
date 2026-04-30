@@ -24,3 +24,6 @@ jobs:
       # Step 3: Compile the code
       - name: Build
         run: cmake --build ${{github.workspace}}/build
+
+      - name: Run Tests
+        run: ./build/test_queue
