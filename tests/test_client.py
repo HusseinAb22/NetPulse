@@ -9,7 +9,7 @@ def listen_for_messages(sock):
             data = sock.recv(1024)
             if not data:
                 print("\nServer closed the connection.")
-                break
+                return
 
             # Print the incoming message, then reprint the input prompt
             # so the terminal doesn't look messy
@@ -17,7 +17,7 @@ def listen_for_messages(sock):
             print("> ", end="", flush=True)
         except:
             print("\nDisconnected.")
-            break
+            return
 
 def main():
     client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
