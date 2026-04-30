@@ -7,17 +7,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 cmake_policy(SET CMP0135 NEW)
 
-
 include_directories(include)
 
-find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
-if(CLANG_TIDY_EXE)
-    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set_target_properties(netpulse test_queue PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
-else()
-    message(WARNING "clang-tidy not found in PATH. Skipping static analysis.")
-endif()
-
+# 1. Fetch Google Test First
 include(FetchContent)
 FetchContent_Declare(
         googletest
@@ -26,6 +18,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+# 2. Create your targets (Executables)
 add_executable(netpulse src/main.cpp
         src/socket_wrapper.cpp
         include/socket_wrapper.h
@@ -37,3 +30,12 @@ add_executable(netpulse src/main.cpp
 add_executable(test_queue
         tests/test_thread_safe_queue.cpp)
 target_link_libraries(test_queue gtest_main gtest pthread)
+
+# 3. NOW apply Clang-Tidy (Because the targets finally exist!)
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+if(CLANG_TIDY_EXE)
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+    set_target_properties(netpulse test_queue PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+else()
+    message(WARNING "clang-tidy not found in PATH. Skipping static analysis.")
+endif()
