@@ -74,7 +74,7 @@ TEST(ThreadSafeQueueTest, SequentialPushPop) {
 }
 
 TEST(ThreadSafeQueueTest, TryPopEmptyQueue) {
-    ThreadSafeQueue<std::optional<int>> queue;
+    ThreadSafeQueue<int> queue;
 
     // Attempt to pop from a brand new, empty queue using the non-blocking
     // method
@@ -84,7 +84,7 @@ TEST(ThreadSafeQueueTest, TryPopEmptyQueue) {
 }
 
 TEST(ThreadSafeQueueTest, TryPopPopulatedQueue) {
-    ThreadSafeQueue<std::optional<int>> queue;
+    ThreadSafeQueue<int> queue;
     queue.push(42);
 
     const std::optional<int> result = queue.tryPop();
