@@ -3,8 +3,8 @@
 #include <vector>
 #include <atomic>
 #include "../include/thread_safe_queue.h"
+#include <optional>
 
-// gtest macro: TEST(TestSuiteName, TestName)
 TEST(ThreadSafeQueueTest, ConcurrentPushPopStressTest) {
     constexpr int NUM_PRODUCERS = 10;
     constexpr int NUM_CONSUMERS = 10;
@@ -53,4 +53,41 @@ TEST(ThreadSafeQueueTest, ConcurrentPushPopStressTest) {
     // -----------------------------------------------------
     constexpr int expected = NUM_PRODUCERS * ITEMS_PER_PRODUCER;
     EXPECT_EQ(total_consumed.load(), expected);
+}
+
+TEST(ThreadSafeQueueTest, SequentialPushPop) {
+    ThreadSafeQueue<int> queue;
+
+    // Push 3 items
+    queue.push(10);
+    queue.push(20);
+    queue.push(30);
+
+    // Pop them and ensure FIFO (First-In, First-Out) order is preserved
+    EXPECT_EQ(queue.pop(), 10);
+    EXPECT_EQ(queue.pop(), 20);
+    EXPECT_EQ(queue.pop(), 30);
+}
+
+TEST(ThreadSafeQueueTest, TryPopEmptyQueue) {
+    ThreadSafeQueue<std::optional<int>> queue;
+
+    // Attempt to pop from a brand new, empty queue using the non-blocking method
+    const std::optional<int> result = queue.tryPop();
+
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST(ThreadSafeQueueTest, TryPopPopulatedQueue) {
+    ThreadSafeQueue<std::optional<int>> queue;
+    queue.push(42);
+
+    const std::optional<int> result = queue.tryPop();
+
+    // It should instantly grab the value
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value(), 42);
+
+    // The queue should now be empty again
+    EXPECT_FALSE(queue.tryPop().has_value());
 }

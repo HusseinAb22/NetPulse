@@ -11,6 +11,7 @@ private:
     std::queue<T> queue_;
     std::mutex mutex_;
     std::condition_variable cv_;
+    
 public:
     ThreadSafeQueue() = default;
     ~ThreadSafeQueue() = default;
