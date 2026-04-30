@@ -23,3 +23,16 @@ void ClientSession::writeLoop() {
         }
     }
 }
+
+void ClientSession::readLoop(){
+    char buffer[1024];
+    while(true) {
+        const ssize_t bytes = recv(client_sock_.getFd(), buffer, sizeof(buffer), 0);
+        if (bytes <= 0) {
+            std::cerr << "Error reading from socket" << std::endl;
+            break;
+        }
+        std::string message(buffer, bytes);
+        this->server_inbox_.push(message);
+    }
+}
