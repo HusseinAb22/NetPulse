@@ -1,13 +1,15 @@
-#include <iostream>
-#include "../include/socket_wrapper.h"
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+
+#include <iostream>
+#include <memory>
 #include <thread>
+#include <vector>
+
+#include "../include/socket_wrapper.h"
+#include "client_session.h"
 #include "message.h"
 #include "thread_safe_queue.h"
-#include <vector>
-#include "client_session.h"
-#include <memory>
 
 ThreadSafeQueue<Message> global_inbox;
 std::vector<std::shared_ptr<ClientSession>> active_clients;
@@ -18,9 +20,8 @@ void router_loop() {
         auto msg = global_inbox.pop();
         std::lock_guard lock(clients_mutex);
         for (const auto &client : active_clients) {
-            if (msg.sender_fd == client->getClientSock()->getFd() ) {
-            }
-            else {
+            if (msg.sender_fd == client->getClientSock()->getFd()) {
+            } else {
                 client->deliver(msg);
             }
         }
@@ -41,32 +42,34 @@ int main() {
     server_addr.sin_port = htons(9000);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    int bind_result = bind(server_sock.getFd(), reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr));
+    int bind_result = bind(server_sock.getFd(),
+                           reinterpret_cast<struct sockaddr *>(&server_addr),
+                           sizeof(server_addr));
     if (bind_result < 0) {
         std::cerr << "Error binding socket" << std::endl;
         return 1;
     }
 
     listen(server_sock.getFd(), 10);
-    std::cout << "server listening on port " << ntohs(server_addr.sin_port) << std::endl;
-
+    std::cout << "server listening on port " << ntohs(server_addr.sin_port)
+              << std::endl;
 
     while (true) {
-        SocketWrapper client_sock(accept(server_sock.getFd(),nullptr,nullptr));
+        SocketWrapper client_sock(
+            accept(server_sock.getFd(), nullptr, nullptr));
         if (!client_sock) {
             std::cerr << "Error accepting client" << std::endl;
             continue;
         }
 
-        auto session= std::make_shared<ClientSession>(std::move(client_sock), global_inbox);
+        auto session = std::make_shared<ClientSession>(std::move(client_sock),
+                                                       global_inbox);
 
         {
             std::lock_guard lock(clients_mutex);
             active_clients.push_back(session);
         }
-        std::jthread client_thread([session] {
-            session->readLoop();
-        });
+        std::jthread client_thread([session] { session->readLoop(); });
         client_thread.detach();
     }
     return 0;

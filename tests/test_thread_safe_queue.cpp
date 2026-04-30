@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
+
+#include <atomic>
+#include <optional>
 #include <thread>
 #include <vector>
-#include <atomic>
+
 #include "../include/thread_safe_queue.h"
-#include <optional>
 
 TEST(ThreadSafeQueueTest, ConcurrentPushPopStressTest) {
     constexpr int NUM_PRODUCERS = 10;
@@ -33,20 +35,22 @@ TEST(ThreadSafeQueueTest, ConcurrentPushPopStressTest) {
     // Spin up consumers and producers
     std::vector<std::thread> consumers;
     consumers.reserve(NUM_CONSUMERS);
-    for (int i = 0; i < NUM_CONSUMERS; ++i) consumers.emplace_back(consumer_task);
+    for (int i = 0; i < NUM_CONSUMERS; ++i)
+        consumers.emplace_back(consumer_task);
 
     std::vector<std::thread> producers;
     producers.reserve(NUM_PRODUCERS);
-    for (int i = 0; i < NUM_PRODUCERS; ++i) producers.emplace_back(producer_task);
+    for (int i = 0; i < NUM_PRODUCERS; ++i)
+        producers.emplace_back(producer_task);
 
     // Wait for producers
-    for (auto& p : producers) p.join();
+    for (auto &p : producers) p.join();
 
     // Push poison pills
     for (int i = 0; i < NUM_CONSUMERS; ++i) queue.push(POISON_PILL);
 
     // Wait for consumers
-    for (auto& c : consumers) c.join();
+    for (auto &c : consumers) c.join();
 
     // -----------------------------------------------------
     // THE ASSERTION (gtest handles the pass/fail output!)
@@ -72,7 +76,8 @@ TEST(ThreadSafeQueueTest, SequentialPushPop) {
 TEST(ThreadSafeQueueTest, TryPopEmptyQueue) {
     ThreadSafeQueue<std::optional<int>> queue;
 
-    // Attempt to pop from a brand new, empty queue using the non-blocking method
+    // Attempt to pop from a brand new, empty queue using the non-blocking
+    // method
     const std::optional<int> result = queue.tryPop();
 
     EXPECT_FALSE(result.has_value());

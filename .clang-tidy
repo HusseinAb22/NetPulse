@@ -1,13 +1,14 @@
----
 Checks: >
   -*,
   bugprone-*,
   cppcoreguidelines-*,
-  modernize-*,
   performance-*,
   readability-*,
-  -cppcoreguidelines-owning-memory,
-  -cppcoreguidelines-pro-bounds-array-to-pointer-decay
+  -modernize-use-trailing-return-type,
+  -performance-avoid-endl,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-special-member-functions,
+  -readability-identifier-length
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'

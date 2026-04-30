@@ -13,4 +13,3 @@ AllowShortFunctionsOnASingleLine: Inline
 AccessModifierOffset: -4
 
 SortIncludes: true
-...

@@ -1,9 +1,10 @@
 #ifndef NETPULSE_THREAD_SAFE_QUEUE_H
 #define NETPULSE_THREAD_SAFE_QUEUE_H
 
-#include <mutex>
-#include <queue>
 #include <condition_variable>
+#include <mutex>
+#include <optional>
+#include <queue>
 
 template <typename T>
 class ThreadSafeQueue {
@@ -11,7 +12,7 @@ private:
     std::queue<T> queue_;
     std::mutex mutex_;
     std::condition_variable cv_;
-    
+
 public:
     ThreadSafeQueue() = default;
     ~ThreadSafeQueue() = default;
@@ -25,7 +26,6 @@ public:
     }
 
     T pop() {
-
         std::unique_lock lock(mutex_);
         cv_.wait(lock, [this]() { return !queue_.empty(); });
 
@@ -34,7 +34,7 @@ public:
         return item_;
     }
 
-    T tryPop() {
+    std::optional<T> tryPop() {
         std::lock_guard lock(mutex_);
         if (queue_.empty()) {
             return std::nullopt;
@@ -44,4 +44,4 @@ public:
         return item_;
     }
 };
-#endif //NETPULSE_THREAD_SAFE_QUEUE_H
+#endif  // NETPULSE_THREAD_SAFE_QUEUE_H

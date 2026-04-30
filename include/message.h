@@ -6,7 +6,7 @@
 #define NETPULSE_MESSAGE_H
 #include <string>
 struct Message {
-  int sender_fd;
-  const std::string text;
+    int sender_fd;
+    const std::string text;
 };
-#endif //NETPULSE_MESSAGE_H
+#endif  // NETPULSE_MESSAGE_H
