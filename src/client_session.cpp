@@ -20,6 +20,10 @@ void ClientSession::writeLoop() {
     while (true) {
         auto msg = this->outbox_.pop();
 
+        if (msg.sender_fd == -1) {
+            break;
+        }
+
         ssize_t bytes_sent =
             send(client_sock_.getFd(), msg.text.c_str(), msg.text.length(), 0);
         if (bytes_sent < 0) {
@@ -36,7 +40,11 @@ void ClientSession::readLoop() {
     while (true) {
         const ssize_t bytes =
             recv(client_sock_.getFd(), buffer, sizeof(buffer), 0);
-        if (bytes <= 0) {
+        if (bytes == 0) {
+            std::cout << "Client: "<< client_sock_.getFd()<<" disconnected!" << std::endl;
+            break;
+        }
+        if (bytes < 0) {
             std::cerr << "Error reading from socket" << std::endl;
             break;
         }
@@ -44,8 +52,14 @@ void ClientSession::readLoop() {
         Message msg{client_sock_.getFd(), message};
         this->server_inbox_.push(msg);
     }
+    alive_ = false;
+    outbox_.push({-1, ""});
 }
 
 const SocketWrapper *ClientSession::getClientSock() const {
     return &this->client_sock_;
+}
+
+bool ClientSession::isAlive() const {
+    return this->alive_.load();
 }

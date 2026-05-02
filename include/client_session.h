@@ -18,6 +18,8 @@ private:
 
     std::jthread writer_thread_;
 
+    std::atomic<bool> alive_{true};
+
     void writeLoop();
 
 public:
@@ -31,6 +33,8 @@ public:
     const SocketWrapper *getClientSock() const;
     void readLoop();
     void deliver(const Message &msg);
+
+    bool isAlive() const;
 };
 
 #endif  // NETPULSE_CLIENT_SESSION_H

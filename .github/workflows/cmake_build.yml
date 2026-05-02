@@ -1,6 +1,5 @@
-name: C++ CI Build
+name: C++ CI
 
-# Trigger the action on push to main or any Pull Request targeting main
 on:
   push:
     branches: [ "main" ]
@@ -8,22 +7,54 @@ on:
     branches: [ "main" ]
 
 jobs:
+  # 1. Cross-platform Release build + tests
   build:
-    # Run on the latest Ubuntu environment (similar to your WSL setup)
-    runs-on: ubuntu-latest
-
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
-      # Step 1: Download your code into the runner
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Step 2: Configure CMake (Creates the build directory)
       - name: Configure CMake
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      # Step 3: Compile the code
       - name: Build
-        run: cmake --build ${{github.workspace}}/build
+        run: cmake --build build --parallel
 
       - name: Run Tests
+        run: ./build/test_queue
+
+  # 2. Sanitizer builds (Linux only)
+  sanitizers:
+    name: Sanitizer (${{ matrix.sanitizer.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer:
+          - name: tsan
+            flags: "-fsanitize=thread -fno-omit-frame-pointer -g -O1"
+          - name: asan-ubsan
+            flags: "-fsanitize=address,undefined -fno-omit-frame-pointer -g -O1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_FLAGS="${{ matrix.sanitizer.flags }}"
+          -DCMAKE_EXE_LINKER_FLAGS="${{ matrix.sanitizer.flags }}"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run Tests
+        env:
+          TSAN_OPTIONS: "halt_on_error=1 second_deadlock_stack=1"
+          ASAN_OPTIONS: "halt_on_error=1 detect_leaks=1 abort_on_error=1"
+          UBSAN_OPTIONS: "halt_on_error=1 print_stacktrace=1"
         run: ./build/test_queue
