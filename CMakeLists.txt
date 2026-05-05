@@ -30,7 +30,9 @@ add_executable(netpulse src/main.cpp
         include/thread_safe_queue.h
         src/client_session.cpp
         include/client_session.h
-        include/message.h)
+        include/message.h
+        src/protocol.cpp
+        include/protocol.h)
 
 add_executable(test_queue
         tests/test_thread_safe_queue.cpp)

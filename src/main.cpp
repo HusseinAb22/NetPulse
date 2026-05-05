@@ -21,7 +21,7 @@ void router_loop() {
         auto msg = global_inbox.pop();
         std::lock_guard lock(clients_mutex);
         for (const auto &client : active_clients) {
-            if (msg.sender_fd == client->getClientSock()->getFd()) {
+            if (msg.sender == client->getClientSock()->getFd()) {
             } else {
                 client->deliver(msg);
             }

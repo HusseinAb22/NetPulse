@@ -1,12 +1,17 @@
-//
-// Created by Hussein Abbas on 30/04/2026.
-//
-
 #ifndef NETPULSE_MESSAGE_H
 #define NETPULSE_MESSAGE_H
 #include <string>
+#include <chrono>
+
+enum class MessageType {NICK, JOIN, MSG, DM, LIST, QUIT};
+
 struct Message {
-    int sender_fd;
-    std::string text;
+    MessageType type;
+
+    std::string sender;
+    std::string target;
+
+    std::string body;
+    std::chrono::system_clock::time_point timeStamp;
 };
 #endif  // NETPULSE_MESSAGE_H
