@@ -7,9 +7,11 @@
 #include <optional>
 #include <string>
 #include "message.h"
+#include <string_view>
 
 namespace  Protocol {
     std::optional<Message> parse(std::string_view line);
-};
+    std::string serialize(const Message& msg);
+}
 
 #endif  // NETPULSE_PROTOCOL_H

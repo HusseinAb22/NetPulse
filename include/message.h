@@ -12,6 +12,6 @@ struct Message {
     std::string target;
 
     std::string body;
-    std::chrono::system_clock::time_point timeStamp;
+    std::chrono::system_clock::time_point timestamp;
 };
 #endif  // NETPULSE_MESSAGE_H
