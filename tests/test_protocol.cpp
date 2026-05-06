@@ -128,3 +128,22 @@ TEST(ParseProtocolTest, FailsOnUnknownCommand) {
 TEST(ParseProtocolTest, FailsOnEmptyInput) {
     EXPECT_FALSE(protocol::parse("").has_value());
 }
+
+// ==========================================
+// 6. Edge Cases & Protocol Enforcement
+// ==========================================
+
+TEST(ParseProtocolTest, FailsOnLowercaseCommand) {
+    // Commands must be strictly uppercase
+    EXPECT_FALSE(protocol::parse("nick alice").has_value());
+    EXPECT_FALSE(protocol::parse("Msg #general hi").has_value());
+}
+
+TEST(ParseProtocolTest, MsgTrimsWhitespaceFromBody) {
+    // Leniency: Users accidentally typing multiple spaces should still yield a clean body
+    const auto msg = protocol::parse("MSG #general     hi there    ");
+    ASSERT_TRUE(msg.has_value());
+    EXPECT_EQ(msg->type, MessageType::MSG);
+    EXPECT_EQ(msg->target, "#general");
+    EXPECT_EQ(msg->body, "hi there");
+}
