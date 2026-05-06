@@ -42,7 +42,7 @@ def main():
                 print("Closing the connection.")
                 break
             if msg.strip():
-                client_sock.send(msg.encode())
+                client_sock.send((msg+'\n').encode())
         except KeyboardInterrupt:
             break
 
