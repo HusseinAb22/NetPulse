@@ -2,12 +2,13 @@
 #define NETPULSE_PROTOCOL_H
 #include <optional>
 #include <string>
-#include "message.h"
 #include <string_view>
 
-namespace  protocol {
-    std::optional<Message> parse(std::string_view line);
-    std::string serialize(const Message& msg);
-}
+#include "message.h"
+
+namespace protocol {
+std::optional<Message> parse(std::string_view line);
+std::string serialize(const Message &msg);
+}  // namespace protocol
 
 #endif  // NETPULSE_PROTOCOL_H

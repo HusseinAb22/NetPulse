@@ -1,6 +1,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include <csignal>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -10,7 +11,6 @@
 #include "client_session.h"
 #include "message.h"
 #include "thread_safe_queue.h"
-#include <csignal>
 
 ThreadSafeQueue<Message> global_inbox;
 std::vector<std::shared_ptr<ClientSession>> active_clients;
@@ -27,9 +27,10 @@ void router_loop() {
             }
         }
 
-        std::erase_if(active_clients, [](const std::shared_ptr<ClientSession>& client) {
-            return !client->isAlive();
-        });
+        std::erase_if(active_clients,
+                      [](const std::shared_ptr<ClientSession> &client) {
+                          return !client->isAlive();
+                      });
     }
 }
 
@@ -46,7 +47,8 @@ int main() {
     }
 
     constexpr int yes{1};
-    setsockopt(server_sock.getFd(), SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    setsockopt(server_sock.getFd(), SOL_SOCKET, SO_REUSEADDR, &yes,
+               sizeof(yes));
 
     sockaddr_in server_addr = {};
     server_addr.sin_family = AF_INET;
@@ -80,9 +82,7 @@ int main() {
             std::lock_guard lock(clients_mutex);
             active_clients.push_back(session);
         }
-        std::jthread client_thread([session] {
-            session->readLoop();
-        });
+        std::jthread client_thread([session] { session->readLoop(); });
         client_thread.detach();
     }
     return 0;

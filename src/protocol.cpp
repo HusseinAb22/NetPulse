@@ -15,41 +15,54 @@ std::string_view trim(const std::string_view s) {
     return s.substr(first, (last - first + 1));
 }
 /*
-* Peel off the first whitespace-delimited token.
-* Returns {token, remainder}. If no whitespace, remainder is empty.
-*/
+ * Peel off the first whitespace-delimited token.
+ * Returns {token, remainder}. If no whitespace, remainder is empty.
+ */
 std::pair<std::string_view, std::string_view> splitFirst(std::string_view s) {
     size_t pos = s.find(' ');
     if (pos != std::string_view::npos) {
         return std::make_pair(s.substr(0, pos), s.substr(pos + 1));
     }
     return std::make_pair(s, "");
-
 }
 /*
  * parses the command to its MessageType enum equivalent
  */
 std::optional<MessageType> parseCommand(const std::string_view word) {
-    if (word == "NICK") {return MessageType::NICK;}
-    if (word == "JOIN") {return MessageType::JOIN;}
-    if (word == "MSG") {return MessageType::MSG;}
-    if (word == "DM") {return MessageType::DM;}
-    if (word == "LIST") {return MessageType::LIST;}
-    if (word == "QUIT") {return MessageType::QUIT;}
+    if (word == "NICK") {
+        return MessageType::NICK;
+    }
+    if (word == "JOIN") {
+        return MessageType::JOIN;
+    }
+    if (word == "MSG") {
+        return MessageType::MSG;
+    }
+    if (word == "DM") {
+        return MessageType::DM;
+    }
+    if (word == "LIST") {
+        return MessageType::LIST;
+    }
+    if (word == "QUIT") {
+        return MessageType::QUIT;
+    }
 
     return std::nullopt;
 }
-}
-
-
+}  // namespace
 
 std::optional<Message> parse(std::string_view line) {
     line = trim(line);
-    if (line.empty()) {return std::nullopt;}
+    if (line.empty()) {
+        return std::nullopt;
+    }
 
     auto [cmd_word, rest] = splitFirst(line);
     auto cmd = parseCommand(cmd_word);
-    if (!cmd) {return std::nullopt;}
+    if (!cmd) {
+        return std::nullopt;
+    }
 
     Message msg;
     msg.type = *cmd;
@@ -58,30 +71,37 @@ std::optional<Message> parse(std::string_view line) {
     switch (msg.type) {
         case MessageType::NICK:
             // expects: NICK <nickname>
-            if (rest.empty()) {return std::nullopt;}
+            if (rest.empty()) {
+                return std::nullopt;
+            }
             msg.body = std::string(rest);
             return msg;
         case MessageType::JOIN:
             // expects: JOIN <room>
-            if (rest.empty()) {return std::nullopt;}
+            if (rest.empty()) {
+                return std::nullopt;
+            }
             msg.target = std::string(rest);
             return msg;
         case MessageType::MSG:
         case MessageType::DM: {
             // expects: MSG <chanel> <body...>
-            auto [target , body] = splitFirst(rest);
-            if (target.empty() || body.empty()) {return std::nullopt;}
+            auto [target, body] = splitFirst(rest);
+            if (target.empty() || body.empty()) {
+                return std::nullopt;
+            }
             msg.target = std::string(target);
             msg.body = std::string(trim(body));
             return msg;
         }
         case MessageType::LIST:
         case MessageType::QUIT:
-            if (!rest.empty()) {return std::nullopt;}
+            if (!rest.empty()) {
+                return std::nullopt;
+            }
             return msg;
     }
     return std::nullopt;
-
 }
 
-}
+}  // namespace protocol
