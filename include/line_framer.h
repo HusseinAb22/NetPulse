@@ -5,6 +5,8 @@
 
 class LineFramer {
 public:
+    // The std::string_view passed to on_line is only valid for the duration
+    // of the callback. Copy if you need to keep it.
     template <typename Fn>
     void feed(std::string_view chunk, Fn &&on_line) {
         // 1. Append the new incoming bytes to our internal buffer
@@ -17,7 +19,6 @@ public:
             std::string_view line = std::string_view(buffer_).substr(0, pos);
 
             // Leniency: If the client sent \r\n (Windows style), strip the \r
-            // too
             if (!line.empty() && line.back() == '\r') {
                 line.remove_suffix(1);
             }
