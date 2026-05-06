@@ -1,9 +1,9 @@
 #ifndef NETPULSE_MESSAGE_H
 #define NETPULSE_MESSAGE_H
-#include <string>
 #include <chrono>
+#include <string>
 
-enum class MessageType {NICK, JOIN, MSG, DM, LIST, QUIT};
+enum class MessageType { NICK, JOIN, MSG, DM, LIST, QUIT };
 
 struct Message {
     MessageType type;
@@ -15,8 +15,9 @@ struct Message {
     std::string body;
     std::chrono::system_clock::time_point timestamp;
 
-    bool operator==(const Message& other) const noexcept {
-        return type == other.type && sender == other.sender && target == other.target && body == other.body;
+    bool operator==(const Message &other) const noexcept {
+        return type == other.type && sender == other.sender &&
+               target == other.target && body == other.body;
     }
 };
 #endif  // NETPULSE_MESSAGE_H

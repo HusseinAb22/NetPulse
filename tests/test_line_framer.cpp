@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
-#include <vector>
+
 #include <string>
+#include <vector>
+
 #include "../include/line_framer.h"
 
 // 1. Single complete line in one feed.
 TEST(LineFramerTest, SingleCompleteLine) {
     LineFramer framer;
     std::vector<std::string> lines;
-    framer.feed("hello\n", [&](std::string_view line) { lines.emplace_back(line); });
+    framer.feed("hello\n",
+                [&](std::string_view line) { lines.emplace_back(line); });
 
     ASSERT_EQ(lines.size(), 1);
     EXPECT_EQ(lines[0], "hello");
@@ -18,7 +21,8 @@ TEST(LineFramerTest, SingleCompleteLine) {
 TEST(LineFramerTest, MultipleCompleteLines) {
     LineFramer framer;
     std::vector<std::string> lines;
-    framer.feed("line1\nline2\n", [&](std::string_view line) { lines.emplace_back(line); });
+    framer.feed("line1\nline2\n",
+                [&](std::string_view line) { lines.emplace_back(line); });
 
     ASSERT_EQ(lines.size(), 2);
     EXPECT_EQ(lines[0], "line1");
@@ -31,10 +35,12 @@ TEST(LineFramerTest, SplitAcrossTwoFeeds) {
     LineFramer framer;
     std::vector<std::string> lines;
 
-    framer.feed("hel", [&](std::string_view line) { lines.emplace_back(line); });
-    EXPECT_EQ(lines.size(), 0); // Not complete yet
+    framer.feed("hel",
+                [&](std::string_view line) { lines.emplace_back(line); });
+    EXPECT_EQ(lines.size(), 0);  // Not complete yet
 
-    framer.feed("lo\n", [&](std::string_view line) { lines.emplace_back(line); });
+    framer.feed("lo\n",
+                [&](std::string_view line) { lines.emplace_back(line); });
     ASSERT_EQ(lines.size(), 1);
     EXPECT_EQ(lines[0], "hello");
 }
@@ -43,11 +49,12 @@ TEST(LineFramerTest, SplitAcrossTwoFeeds) {
 TEST(LineFramerTest, CompleteLinePlusPartialLeftover) {
     LineFramer framer;
     std::vector<std::string> lines;
-    framer.feed("done\npart", [&](std::string_view line) { lines.emplace_back(line); });
+    framer.feed("done\npart",
+                [&](std::string_view line) { lines.emplace_back(line); });
 
     ASSERT_EQ(lines.size(), 1);
     EXPECT_EQ(lines[0], "done");
-    EXPECT_EQ(framer.size(), 4); // "part" should remain in the buffer
+    EXPECT_EQ(framer.size(), 4);  // "part" should remain in the buffer
 }
 
 // 5. Empty line (feed("\n")) emits one empty string.
@@ -69,7 +76,8 @@ TEST(LineFramerTest, ThreePartialFeedsFormOneLine) {
     framer.feed("b", [&](std::string_view line) { lines.emplace_back(line); });
     EXPECT_EQ(lines.size(), 0);
 
-    framer.feed("c\n", [&](std::string_view line) { lines.emplace_back(line); });
+    framer.feed("c\n",
+                [&](std::string_view line) { lines.emplace_back(line); });
     ASSERT_EQ(lines.size(), 1);
     EXPECT_EQ(lines[0], "abc");
 }
@@ -82,7 +90,8 @@ TEST(LineFramerTest, ThreePartialFeedsFormOneLine) {
 TEST(LineFramerTest, StripsCarriageReturn) {
     LineFramer framer;
     std::vector<std::string> lines;
-    framer.feed("windows\r\n", [&](std::string_view line) { lines.emplace_back(line); });
+    framer.feed("windows\r\n",
+                [&](std::string_view line) { lines.emplace_back(line); });
 
     ASSERT_EQ(lines.size(), 1);
     EXPECT_EQ(lines[0], "windows");
@@ -92,7 +101,8 @@ TEST(LineFramerTest, StripsCarriageReturn) {
 TEST(LineFramerTest, MultipleEmptyLines) {
     LineFramer framer;
     std::vector<std::string> lines;
-    framer.feed("\n\n\n", [&](std::string_view line) { lines.emplace_back(line); });
+    framer.feed("\n\n\n",
+                [&](std::string_view line) { lines.emplace_back(line); });
 
     ASSERT_EQ(lines.size(), 3);
     EXPECT_EQ(lines[0], "");

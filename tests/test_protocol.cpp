@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include "../include/protocol.h"
+
 #include "../include/message.h"
+#include "../include/protocol.h"
 
 // ==========================================
 // 1. Happy Path Tests
@@ -140,7 +141,8 @@ TEST(ParseProtocolTest, FailsOnLowercaseCommand) {
 }
 
 TEST(ParseProtocolTest, MsgTrimsWhitespaceFromBody) {
-    // Leniency: Users accidentally typing multiple spaces should still yield a clean body
+    // Leniency: Users accidentally typing multiple spaces should still yield a
+    // clean body
     const auto msg = protocol::parse("MSG #general     hi there    ");
     ASSERT_TRUE(msg.has_value());
     EXPECT_EQ(msg->type, MessageType::MSG);

@@ -41,22 +41,26 @@ void ClientSession::readLoop() {
         const ssize_t bytes =
             recv(client_sock_.getFd(), buffer, sizeof(buffer), 0);
         if (bytes == 0) {
-            std::cout << "Client: "<< client_sock_.getFd()<<" disconnected!" << std::endl;
+            std::cout << "Client: " << client_sock_.getFd() << " disconnected!"
+                      << std::endl;
             break;
         }
         if (bytes < 0) {
             std::cerr << "Error reading from socket" << std::endl;
             break;
         }
-        framer_.feed({buffer, static_cast<size_t>(bytes)}, [this](std::string_view line) {
-        auto parsed = protocol::parse(line);
-        if (!parsed) {
-            std::cerr << "ClientSession: malformed line ignored: \"" << line << "\"\n";
-            return;
-        }
-        parsed->sender_fd = client_sock_.getFd();
-        server_inbox_.push(*parsed);
-    });
+        framer_.feed({buffer, static_cast<size_t>(bytes)},
+                     [this](std::string_view line) {
+                         auto parsed = protocol::parse(line);
+                         if (!parsed) {
+                             std::cerr
+                                 << "ClientSession: malformed line ignored: \""
+                                 << line << "\"\n";
+                             return;
+                         }
+                         parsed->sender_fd = client_sock_.getFd();
+                         server_inbox_.push(*parsed);
+                     });
 
         if (framer_.size() > kMaxBufferBytes) {
             std::cerr << "ClientSession: buffer cap exceeded; dropping client "

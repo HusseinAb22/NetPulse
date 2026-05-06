@@ -4,16 +4,16 @@
 #include <iostream>
 #include <string>
 #include <thread>
+
 #include "line_framer.h"
 #include "message.h"
+#include "protocol.h"
 #include "socket_wrapper.h"
 #include "thread_safe_queue.h"
-#include "protocol.h"
 class ClientSession {
 private:
     static constexpr std::size_t kMaxBufferBytes = 16 * 1024;
     SocketWrapper client_sock_;
-
 
     LineFramer framer_;
     ThreadSafeQueue<Message> &server_inbox_;
