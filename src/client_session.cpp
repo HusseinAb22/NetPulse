@@ -20,12 +20,12 @@ void ClientSession::writeLoop() {
     while (true) {
         auto msg = this->outbox_.pop();
 
-        if (msg.sender_fd == -1) {
+        if (msg.type == MessageType::QUIT) {
             break;
         }
 
         ssize_t bytes_sent =
-            send(client_sock_.getFd(), msg.text.c_str(), msg.text.length(), 0);
+            send(client_sock_.getFd(), msg.body.c_str(), msg.body.length(), 0);
         if (bytes_sent < 0) {
             std::cerr
                 << "ClientSession: Client send error or client disconnected "
@@ -49,11 +49,14 @@ void ClientSession::readLoop() {
             break;
         }
         const std::string message(buffer, bytes);
-        Message msg{client_sock_.getFd(), message};
+        Message msg;
+        msg.type = MessageType::MSG;
+        msg.sender_fd = client_sock_.getFd();
+        msg.body = message;
         this->server_inbox_.push(msg);
     }
     alive_ = false;
-    outbox_.push({-1, ""});
+    outbox_.push({.type = MessageType::QUIT, .sender_fd = -1});
 }
 
 const SocketWrapper *ClientSession::getClientSock() const {

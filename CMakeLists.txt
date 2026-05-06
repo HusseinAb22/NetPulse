@@ -30,17 +30,30 @@ add_executable(netpulse src/main.cpp
         include/thread_safe_queue.h
         src/client_session.cpp
         include/client_session.h
-        include/message.h)
+        include/message.h
+        src/protocol.cpp
+        include/protocol.h)
 
-add_executable(test_queue
-        tests/test_thread_safe_queue.cpp)
-target_link_libraries(test_queue gtest_main gtest pthread)
+add_executable(tests
+        tests/test_thread_safe_queue.cpp
+        tests/test_protocol.cpp
+        src/protocol.cpp)
+target_link_libraries(tests gtest_main gtest pthread)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(netpulse PRIVATE
+            -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum
+            -Wno-missing-field-initializers)
+    target_compile_options(tests    PRIVATE
+            -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum
+            -Wno-missing-field-initializers)
+endif()
 
 # 3. NOW apply Clang-Tidy (Because the targets finally exist!)
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 if(CLANG_TIDY_EXE)
     message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set_target_properties(netpulse test_queue PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+    set_target_properties(netpulse tests PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
 else()
     message(WARNING "clang-tidy not found in PATH. Skipping static analysis.")
 endif()
