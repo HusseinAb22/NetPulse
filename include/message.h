@@ -13,5 +13,9 @@ struct Message {
 
     std::string body;
     std::chrono::system_clock::time_point timestamp;
+
+    bool operator==(const Message& other) const noexcept {
+        return type == other.type && sender == other.sender && target == other.target && body == other.body;
+    }
 };
 #endif  // NETPULSE_MESSAGE_H

@@ -36,9 +36,11 @@ add_executable(netpulse src/main.cpp
         src/protocol.cpp
         include/protocol.h)
 
-add_executable(test_queue
-        tests/test_thread_safe_queue.cpp)
-target_link_libraries(test_queue gtest_main gtest pthread)
+add_executable(tests
+        tests/test_thread_safe_queue.cpp
+        tests/test_protocol.cpp
+        src/protocol.cpp)
+target_link_libraries(tests gtest_main gtest pthread)
 
 # 3. NOW apply Clang-Tidy (Because the targets finally exist!)
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")

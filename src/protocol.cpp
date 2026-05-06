@@ -72,7 +72,7 @@ std::optional<Message> parse(std::string_view line) {
             auto [target , body] = splitFirst(rest);
             if (target.empty() || body.empty()) {return std::nullopt;}
             msg.target = std::string(target);
-            msg.body = std::string(body);
+            msg.body = std::string(trim(body));
             return msg;
         }
         case MessageType::LIST:
