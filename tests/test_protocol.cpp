@@ -72,6 +72,11 @@ TEST(ParseProtocolTest, FailsOnOnlyWhitespace) {
     EXPECT_FALSE(msg.has_value());
 }
 
+TEST(ProtocolParseTest, MsgToleratesExtraSpaceBeforeBody) {
+    const auto msg = protocol::parse("MSG #general    hi");
+    ASSERT_TRUE(msg.has_value());
+    EXPECT_EQ(msg->body, "hi");
+}
 // ==========================================
 // 3. Missing Arguments Tests
 // ==========================================

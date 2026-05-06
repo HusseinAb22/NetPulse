@@ -4,9 +4,7 @@ project(NetPulse)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum)
-endif()
+
 cmake_policy(SET CMP0135 NEW)
 
 if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -42,11 +40,16 @@ add_executable(tests
         src/protocol.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(netpulse PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum)
+    target_compile_options(tests    PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum)
+endif()
+
 # 3. NOW apply Clang-Tidy (Because the targets finally exist!)
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 if(CLANG_TIDY_EXE)
     message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set_target_properties(netpulse test_queue PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+    set_target_properties(netpulse tests PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
 else()
     message(WARNING "clang-tidy not found in PATH. Skipping static analysis.")
 endif()

@@ -25,7 +25,7 @@ jobs:
         run: cmake --build build --parallel
 
       - name: Run Tests
-        run: ./build/test_queue
+        run: ./build/tests
 
   # 2. Sanitizer builds (Linux only)
   sanitizers:

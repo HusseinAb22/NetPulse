@@ -8,6 +8,7 @@ enum class MessageType {NICK, JOIN, MSG, DM, LIST, QUIT};
 struct Message {
     MessageType type;
 
+    int sender_fd = -1;
     std::string sender;
     std::string target;
 

@@ -20,7 +20,7 @@ void ClientSession::writeLoop() {
     while (true) {
         auto msg = this->outbox_.pop();
 
-        if (msg.sender == -1) {
+        if (msg.type == MessageType::QUIT) {
             break;
         }
 
@@ -49,11 +49,14 @@ void ClientSession::readLoop() {
             break;
         }
         const std::string message(buffer, bytes);
-        Message msg{client_sock_.getFd(), message};
+        Message msg;
+        msg.type = MessageType::MSG;
+        msg.sender_fd = client_sock_.getFd();
+        msg.body = message;
         this->server_inbox_.push(msg);
     }
     alive_ = false;
-    outbox_.push({-1, ""});
+    outbox_.push({.type = MessageType::QUIT, .sender_fd = -1});
 }
 
 const SocketWrapper *ClientSession::getClientSock() const {
