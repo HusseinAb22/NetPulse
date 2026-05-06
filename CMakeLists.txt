@@ -41,8 +41,12 @@ add_executable(tests
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(netpulse PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum)
-    target_compile_options(tests    PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum)
+    target_compile_options(netpulse PRIVATE
+            -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum
+            -Wno-missing-field-initializers)
+    target_compile_options(tests    PRIVATE
+            -Wall -Wextra -Wpedantic -Wshadow -Wswitch-enum
+            -Wno-missing-field-initializers)
 endif()
 
 # 3. NOW apply Clang-Tidy (Because the targets finally exist!)
