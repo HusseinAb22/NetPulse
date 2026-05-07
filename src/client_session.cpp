@@ -79,3 +79,5 @@ const SocketWrapper *ClientSession::getClientSock() const {
 bool ClientSession::isAlive() const {
     return this->alive_.load();
 }
+
+int ClientSession::getFd() const { return client_sock_.getFd(); }

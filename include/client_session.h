@@ -38,6 +38,7 @@ public:
     void deliver(const Message &msg);
 
     bool isAlive() const;
+    int getFd() const;
 };
 
 #endif  // NETPULSE_CLIENT_SESSION_H
