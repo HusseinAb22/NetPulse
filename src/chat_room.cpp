@@ -24,7 +24,6 @@ void ChatRoom::join(const std::shared_ptr<ClientSession>& client) {
 
     for (const auto &cl : members_) {
         if (auto member = cl.lock(); member == client) {
-            std::cerr<<"[ChatRoom::join()] Client is already joined\n";
             return;
         }
 
