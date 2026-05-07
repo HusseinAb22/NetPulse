@@ -8,6 +8,17 @@
 #include "../include/thread_safe_queue.h"
 #include <iostream>
 
+
+#if defined(__SANITIZE_THREAD__) || (defined(__has_feature) && __has_feature(thread_sanitizer))
+constexpr int NUM_USERS = 20;
+constexpr int NUM_THREADS = 3;
+constexpr int ITERATIONS = 100;
+#else
+constexpr int NUM_USERS = 100;
+constexpr int NUM_THREADS = 10;
+constexpr int ITERATIONS = 1000;
+#endif
+
 // ==========================================
 // Test Infrastructure: The Mock Client
 // ==========================================
@@ -140,7 +151,6 @@ TEST(ChatRoomTest, BroadcastEmptyBodyDeliversToNoOne) {
 
 TEST(ChatRoomTest, ConcurrentJoinLeaveBroadcast) {
     ChatRoom room("#chaos");
-    constexpr int NUM_USERS = 50;
 
     // Using base pointers to match the ChatRoom::join signature
     std::vector<std::shared_ptr<ClientSession>> users;
@@ -152,7 +162,7 @@ TEST(ChatRoomTest, ConcurrentJoinLeaveBroadcast) {
     std::cout << NUM_USERS <<" users created \n";
     // Readers: M threads continuously broadcasting
     std::vector<std::jthread> broadcasters;
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < NUM_THREADS; ++i) {
         broadcasters.emplace_back([&]() {
             while (broadcasting) {
                 Message msg;
@@ -166,9 +176,9 @@ TEST(ChatRoomTest, ConcurrentJoinLeaveBroadcast) {
 
     // Writers: N threads joining and leaving users randomly
     std::vector<std::jthread> mutators;
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < NUM_THREADS; ++i) {
         mutators.emplace_back([&, i]() {
-            for (int j = 0; j < 1000; ++j) {
+            for (int j = 0; j < ITERATIONS; ++j) {
                 const auto &user = users.at(((i * 10) + j) % NUM_USERS);
                 room.join(user);
                 std::this_thread::yield(); // Induce race conditions
