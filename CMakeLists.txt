@@ -33,13 +33,22 @@ add_executable(netpulse src/main.cpp
         include/message.h
         src/protocol.cpp
         include/protocol.h
-        include/line_framer.h)
+        include/line_framer.h
+        src/chat_room.cpp
+        include/chat_room.h)
 
 add_executable(tests
         tests/test_thread_safe_queue.cpp
         tests/test_protocol.cpp
         src/protocol.cpp
-        tests/test_line_framer.cpp)
+        tests/test_line_framer.cpp
+        src/chat_room.cpp
+        include/chat_room.h
+        include/client_session.h
+        src/client_session.cpp
+        include/socket_wrapper.h
+        src/socket_wrapper.cpp
+        tests/test_chat_room.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
