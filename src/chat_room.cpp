@@ -40,3 +40,17 @@ void ChatRoom::leave(const int client_fd) {
     });
 }
 
+void ChatRoom::broadcast(const Message &msg) {
+    if (msg.body.empty()) {
+        return;
+    }
+    std::shared_lock lock(mutex_);
+    for (const auto &cl : members_) {
+        if (const auto member = cl.lock()) {
+            if (member->getFd() != msg.sender_fd) {
+                member->deliver(msg);
+            }
+        }
+    }
+}
+
