@@ -8,15 +8,16 @@
 #include "../include/thread_safe_queue.h"
 #include <iostream>
 
+#if defined(__SANITIZE_THREAD__)
+#  define NETPULSE_UNDER_TSAN 1
+#elif defined(__has_feature)
+#  if __has_feature(thread_sanitizer)
+#    define NETPULSE_UNDER_TSAN 1
+#  endif
+#endif
 
-#if defined(__SANITIZE_THREAD__) || (defined(__has_feature) && __has_feature(thread_sanitizer))
-constexpr int NUM_USERS = 20;
-constexpr int NUM_THREADS = 3;
-constexpr int ITERATIONS = 100;
-#else
-constexpr int NUM_USERS = 100;
-constexpr int NUM_THREADS = 10;
-constexpr int ITERATIONS = 1000;
+#ifndef NETPULSE_UNDER_TSAN
+#  define NETPULSE_UNDER_TSAN 0
 #endif
 
 // ==========================================
@@ -150,10 +151,20 @@ TEST(ChatRoomTest, BroadcastEmptyBodyDeliversToNoOne) {
 // ==========================================
 
 TEST(ChatRoomTest, ConcurrentJoinLeaveBroadcast) {
+#if NETPULSE_UNDER_TSAN
+    constexpr int NUM_USERS = 20;
+    constexpr int NUM_THREADS = 3;
+    constexpr int ITERATIONS = 100;
+#else
+    constexpr int NUM_USERS = 100;
+    constexpr int NUM_THREADS = 10;
+    constexpr int ITERATIONS = 1000;
+#endif
     ChatRoom room("#chaos");
 
     // Using base pointers to match the ChatRoom::join signature
     std::vector<std::shared_ptr<ClientSession>> users;
+    users.reserve(NUM_USERS);
     for (int i = 0; i < NUM_USERS; ++i) {
         users.push_back(make_dummy_client(2000 + i));
     }
@@ -162,6 +173,7 @@ TEST(ChatRoomTest, ConcurrentJoinLeaveBroadcast) {
     std::cout << NUM_USERS <<" users created \n";
     // Readers: M threads continuously broadcasting
     std::vector<std::jthread> broadcasters;
+    broadcasters.reserve(NUM_THREADS);
     for (int i = 0; i < NUM_THREADS; ++i) {
         broadcasters.emplace_back([&]() {
             while (broadcasting) {
@@ -176,6 +188,7 @@ TEST(ChatRoomTest, ConcurrentJoinLeaveBroadcast) {
 
     // Writers: N threads joining and leaving users randomly
     std::vector<std::jthread> mutators;
+    mutators.reserve(NUM_THREADS);
     for (int i = 0; i < NUM_THREADS; ++i) {
         mutators.emplace_back([&, i]() {
             for (int j = 0; j < ITERATIONS; ++j) {
