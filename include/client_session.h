@@ -28,14 +28,14 @@ private:
 public:
     ClientSession(SocketWrapper client_sock,
                   ThreadSafeQueue<Message> &server_inbox);
-    ~ClientSession() = default;
+    virtual ~ClientSession() noexcept;
 
     ClientSession(const ClientSession &) = delete;
     ClientSession &operator=(const ClientSession &) = delete;
 
     const SocketWrapper *getClientSock() const;
     void readLoop();
-    void deliver(const Message &msg);
+    virtual void deliver(const Message &msg);
 
     bool isAlive() const;
     int getFd() const;

@@ -43,7 +43,12 @@ add_executable(tests
         src/protocol.cpp
         tests/test_line_framer.cpp
         src/chat_room.cpp
-        include/chat_room.h)
+        include/chat_room.h
+        include/client_session.h
+        src/client_session.cpp
+        include/socket_wrapper.h
+        src/socket_wrapper.cpp
+        tests/test_chat_room.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
