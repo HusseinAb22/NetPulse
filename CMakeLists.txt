@@ -53,7 +53,8 @@ add_executable(tests
         tests/test_chat_room.cpp
         src/room_manager.cpp
         include/room_manager.h
-        tests/test_helpers.h)
+        tests/test_helpers.h
+        tests/test_room_manager.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
