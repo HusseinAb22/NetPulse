@@ -7,6 +7,7 @@
 #include "../include/socket_wrapper.h"
 #include "../include/thread_safe_queue.h"
 #include <iostream>
+#include "test_helpers.h"
 
 #if defined(__SANITIZE_THREAD__)
 #  define NETPULSE_UNDER_TSAN 1
@@ -19,34 +20,6 @@
 #ifndef NETPULSE_UNDER_TSAN
 #  define NETPULSE_UNDER_TSAN 0
 #endif
-
-// ==========================================
-// Test Infrastructure: The Mock Client
-// ==========================================
-
-static ThreadSafeQueue<Message> dummy_server_inbox;
-
-// A specialized client that intercepts messages instead of trying to send them over TCP
-class MockClientSession : public ClientSession {
-public:
-    std::vector<Message> received_messages;
-    std::mutex mock_mutex;
-
-    // Call the base constructor with a dummy socket and inbox
-    explicit MockClientSession(int fd) : ClientSession(SocketWrapper(fd), dummy_server_inbox) {}
-
-    // Override the delivery mechanism to just store the message locally
-    void deliver(const Message& msg) override {
-        std::lock_guard lock(mock_mutex);
-        received_messages.push_back(msg);
-    }
-
-};
-
-// Helper to quickly generate our mock clients
-std::shared_ptr<MockClientSession> make_dummy_client(int fd) {
-    return std::make_shared<MockClientSession>(fd);
-}
 
 // ==========================================
 // Single-Threaded Happy Paths
