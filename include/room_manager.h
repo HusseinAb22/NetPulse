@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include "chat_room.h"
-
+#include <string>
 class RoomManager {
 private:
     std::unordered_map<std::string, std::unique_ptr<ChatRoom>> rooms_;
@@ -13,9 +13,9 @@ private:
 public:
     RoomManager() = default;
 
-    ChatRoom& getOrCreate(std::string& name);
-    ChatRoom* find(const std::string& name);
-    std::vector<std::string> listRooms();
+    ChatRoom& getOrCreate(const std::string& name);
+    ChatRoom* find(const std::string& name) const;
+    std::vector<std::string> listRooms() const;
     void removeEmpty();
 
     RoomManager(const RoomManager&) = delete;

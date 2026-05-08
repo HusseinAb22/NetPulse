@@ -39,7 +39,7 @@ void ChatRoom::leave(const int client_fd) {
     });
 }
 
-void ChatRoom::broadcast(const Message &msg) {
+void ChatRoom::broadcast(const Message &msg) const {
     if (msg.body.empty()) {
         return;
     }

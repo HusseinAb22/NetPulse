@@ -14,7 +14,7 @@ private:
 public:
     explicit ChatRoom(std::string name);
 
-    void broadcast(const Message &msg);
+    void broadcast(const Message &msg) const;
     void join(const std::shared_ptr<ClientSession>& client);
     void leave(int client_fd);
 
