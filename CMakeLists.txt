@@ -35,7 +35,9 @@ add_executable(netpulse src/main.cpp
         include/protocol.h
         include/line_framer.h
         src/chat_room.cpp
-        include/chat_room.h)
+        include/chat_room.h
+        src/room_manager.cpp
+        include/room_manager.h)
 
 add_executable(tests
         tests/test_thread_safe_queue.cpp
@@ -48,7 +50,9 @@ add_executable(tests
         src/client_session.cpp
         include/socket_wrapper.h
         src/socket_wrapper.cpp
-        tests/test_chat_room.cpp)
+        tests/test_chat_room.cpp
+        src/room_manager.cpp
+        include/room_manager.h)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
