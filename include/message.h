@@ -3,8 +3,12 @@
 #include <chrono>
 #include <string>
 
-enum class MessageType { NICK, JOIN, MSG, DM, LIST, QUIT };
-
+enum class MessageType {
+    // C→S
+    NICK, JOIN, MSG, DM, LIST, QUIT,
+    // S→C
+    OK, ERR, BROADCAST, PRIVMSG, ROOMLIST,
+};
 struct Message {
     MessageType type;
 
