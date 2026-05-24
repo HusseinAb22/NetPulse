@@ -58,7 +58,8 @@ add_executable(tests
         tests/test_helpers.h
         tests/test_room_manager.cpp
         src/nickname_registry.cpp
-        include/nickname_registry.h)
+        include/nickname_registry.h
+        tests/test_nickname_registry.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
