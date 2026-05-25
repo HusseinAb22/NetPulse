@@ -5,14 +5,15 @@
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <stop_token>
 
 template <typename T>
 class ThreadSafeQueue {
 private:
     std::queue<T> queue_;
     std::mutex mutex_;
-    std::condition_variable cv_;
 
+    std::condition_variable_any cv_;
 public:
     ThreadSafeQueue() = default;
     ~ThreadSafeQueue() = default;
@@ -29,6 +30,19 @@ public:
         std::unique_lock lock(mutex_);
         cv_.wait(lock, [this]() { return !queue_.empty(); });
 
+        T item_ = std::move(queue_.front());
+        queue_.pop();
+        return item_;
+    }
+    
+    // Blocks until an item is available OR `token` is triggered. Returns
+    // std::nullopt only when stop was requested AND the queue is empty, so a
+    // consumer loop still drains anything queued before exiting.
+    std::optional<T> pop(std::stop_token token) {
+        std::unique_lock lock(mutex_);
+        if (!cv_.wait(lock, token, [this]() { return !queue_.empty(); })) {
+            return std::nullopt;  // stop requested, nothing left to hand out
+        }
         T item_ = std::move(queue_.front());
         queue_.pop();
         return item_;
