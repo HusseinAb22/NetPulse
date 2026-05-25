@@ -39,6 +39,18 @@ void ChatRoom::leave(const int client_fd) {
     });
 }
 
+bool ChatRoom::contains(const int client_fd) const {
+    std::shared_lock lock(mutex_);
+    for (const auto &cl : members_) {
+        if (const auto member = cl.lock()) {
+            if (member->getFd() == client_fd) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void ChatRoom::broadcast(const Message &msg) const {
     if (msg.body.empty()) {
         return;
@@ -52,4 +64,3 @@ void ChatRoom::broadcast(const Message &msg) const {
         }
     }
 }
-
