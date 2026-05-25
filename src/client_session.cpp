@@ -3,6 +3,16 @@
 #include <sys/socket.h>
 
 #include <cstring>
+#include <string>
+
+#include "../include/protocol.h"
+
+// Linux raises SIGPIPE on write to a half-closed socket; MSG_NOSIGNAL
+// suppresses it. macOS lacks the flag (it uses SO_NOSIGPIPE + the global
+// SIGPIPE ignore in main), so fall back to 0 there.
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 
 ClientSession::ClientSession(SocketWrapper client_sock,
                              ThreadSafeQueue<Message> &server_inbox)
@@ -20,21 +30,38 @@ void ClientSession::writeLoop() {
     while (true) {
         auto msg = this->outbox_.pop();
 
+        // QUIT is the poison pill pushed by the destructor to unblock this
+        // loop so the session can be torn down.
         if (msg.type == MessageType::QUIT) {
             break;
         }
 
-        ssize_t bytes_sent =
-            send(client_sock_.getFd(), msg.body.c_str(), msg.body.length(), 0);
-        if (bytes_sent < 0) {
-            std::cerr
-                << "ClientSession: Client send error or client disconnected "
-                << std::endl;
+        // Serialize to the wire format (e.g. "BROADCAST #gen alice hi\n"),
+        // not just the body — the client parses whole protocol lines.
+        const std::string wire = protocol::serialize(msg);
+        const std::size_t total = wire.size();
+        std::size_t sent = 0;
+        bool failed = false;
+
+        // send() may transmit fewer bytes than requested; loop until done.
+        while (sent < total) {
+            const ssize_t n = send(client_sock_.getFd(), wire.data() + sent,
+                                   total - sent, MSG_NOSIGNAL);
+            if (n <= 0) {
+                failed = true;
+                break;
+            }
+            sent += static_cast<std::size_t>(n);
+        }
+
+        if (failed) {
+            std::cerr << "ClientSession: send error on fd "
+                      << client_sock_.getFd() << std::endl;
+            alive_ = false;
             break;
         }
     }
 }
-
 void ClientSession::readLoop() {
     char buffer[1024];
     while (true) {
@@ -69,7 +96,11 @@ void ClientSession::readLoop() {
         }
     }
     alive_ = false;
-    outbox_.push({.type = MessageType::QUIT, .sender_fd = -1});
+    // Tell the dispatcher this fd is gone so it runs the cleanup path
+    // (release nick, leave rooms, drop from the connection table). The
+    // writer thread is stopped separately by the destructor's poison pill.
+    server_inbox_.push(
+        {.type = MessageType::QUIT, .sender_fd = client_sock_.getFd()});
 }
 
 const SocketWrapper *ClientSession::getClientSock() const {
