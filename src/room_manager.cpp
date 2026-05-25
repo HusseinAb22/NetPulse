@@ -25,6 +25,13 @@ std::vector<std::string> RoomManager::listRooms() const {
     return rooms;
 }
 
+void RoomManager::leaveAll(const int client_fd) {
+    std::lock_guard lock(mutex_);
+    for (auto& [name, room] : rooms_) {
+        room->leave(client_fd);
+    }
+}
+
 void RoomManager::removeEmpty() {
     std::lock_guard lock(mutex_);
     std::erase_if(rooms_, [](const auto& keyval) {
