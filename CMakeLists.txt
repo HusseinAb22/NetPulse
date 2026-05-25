@@ -37,7 +37,11 @@ add_executable(netpulse src/main.cpp
         src/chat_room.cpp
         include/chat_room.h
         src/room_manager.cpp
-        include/room_manager.h)
+        include/room_manager.h
+        src/nickname_registry.cpp
+        include/nickname_registry.h
+        src/dispatcher.cpp
+        include/dispatcher.h)
 
 add_executable(tests
         tests/test_thread_safe_queue.cpp
@@ -54,7 +58,13 @@ add_executable(tests
         src/room_manager.cpp
         include/room_manager.h
         tests/test_helpers.h
-        tests/test_room_manager.cpp)
+        tests/test_room_manager.cpp
+        src/nickname_registry.cpp
+        include/nickname_registry.h
+        tests/test_nickname_registry.cpp
+        src/dispatcher.cpp
+        include/dispatcher.h
+        tests/test_dispatcher.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

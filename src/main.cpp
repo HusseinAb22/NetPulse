@@ -5,40 +5,23 @@
 #include <iostream>
 #include <memory>
 #include <thread>
-#include <vector>
 
 #include "../include/socket_wrapper.h"
 #include "client_session.h"
+#include "dispatcher.h"
 #include "message.h"
 #include "thread_safe_queue.h"
 
-ThreadSafeQueue<Message> global_inbox;
-std::vector<std::shared_ptr<ClientSession>> active_clients;
-std::mutex clients_mutex;
-
-void router_loop() {
-    while (true) {
-        auto msg = global_inbox.pop();
-        std::lock_guard lock(clients_mutex);
-        for (const auto &client : active_clients) {
-            if (msg.sender_fd == client->getClientSock()->getFd()) {
-            } else {
-                client->deliver(msg);
-            }
-        }
-
-        std::erase_if(active_clients,
-                      [](const std::shared_ptr<ClientSession> &client) {
-                          return !client->isAlive();
-                      });
-    }
-}
-
 int main() {
+    // Writing to a half-closed socket would otherwise kill the process.
     signal(SIGPIPE, SIG_IGN);
 
-    std::jthread client_delivery_thread(router_loop);
-    client_delivery_thread.detach();
+    ThreadSafeQueue<Message> inbox;
+    Dispatcher dispatcher(inbox);
+
+    // The single dispatcher thread owns all room/registry/connection state.
+    std::jthread dispatch_thread([&dispatcher] { dispatcher.run(); });
+    dispatch_thread.detach();
 
     const SocketWrapper server_sock(socket(AF_INET, SOCK_STREAM, 0));
     if (!server_sock) {
@@ -75,15 +58,17 @@ int main() {
             continue;
         }
 
-        auto session = std::make_shared<ClientSession>(std::move(client_sock),
-                                                       global_inbox);
+        auto session =
+            std::make_shared<ClientSession>(std::move(client_sock), inbox);
 
-        {
-            std::lock_guard lock(clients_mutex);
-            active_clients.push_back(session);
-        }
-        std::jthread client_thread([session] { session->readLoop(); });
-        client_thread.detach();
+        // Register BEFORE the reader starts, so the session is findable by the
+        // time any of its messages reach the dispatcher.
+        dispatcher.registerSession(session);
+
+        // The reader thread holds a strong ref, keeping the session alive while
+        // recv() runs. It releases that ref when it returns on disconnect.
+        std::jthread reader([session] { session->readLoop(); });
+        reader.detach();
     }
     return 0;
 }

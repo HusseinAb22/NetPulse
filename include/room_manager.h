@@ -16,6 +16,7 @@ public:
     ChatRoom& getOrCreate(const std::string& name);
     ChatRoom* find(const std::string& name) const;
     std::vector<std::string> listRooms() const;
+    void leaveAll(int client_fd);
     void removeEmpty();
 
     RoomManager(const RoomManager&) = delete;

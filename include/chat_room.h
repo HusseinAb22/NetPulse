@@ -17,7 +17,7 @@ public:
     void broadcast(const Message &msg) const;
     void join(const std::shared_ptr<ClientSession>& client);
     void leave(int client_fd);
-
+    bool contains(int client_fd) const;
     std::size_t memberCount() const;
 
     const std::string& name() const;

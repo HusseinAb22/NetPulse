@@ -47,6 +47,21 @@ std::optional<MessageType> parseCommand(const std::string_view word) {
     if (word == "QUIT") {
         return MessageType::QUIT;
     }
+    if (word == "OK") {
+        return MessageType::OK;
+    }
+    if (word == "ERR") {
+        return MessageType::ERR;
+    }
+    if (word == "BROADCAST") {
+        return MessageType::BROADCAST;
+    }
+    if (word == "PRIVMSG") {
+        return MessageType::PRIVMSG;
+    }
+    if (word == "ROOMLIST") {
+        return MessageType::ROOMLIST;
+    }
 
     return std::nullopt;
 }
@@ -100,8 +115,65 @@ std::optional<Message> parse(std::string_view line) {
                 return std::nullopt;
             }
             return msg;
+        case MessageType::OK:
+        case MessageType::ERR:
+            if (rest.empty()) {
+                return std::nullopt;
+            }
+            msg.body = std::string(rest);
+            return msg;
+        case MessageType::BROADCAST:
+        case MessageType::PRIVMSG: {
+            auto [target, body] = splitFirst(rest);
+            if (target.empty() || body.empty()) {
+                return std::nullopt;
+            }
+            auto [sender, msgBody] = splitFirst(body);
+            if (sender.empty() || msgBody.empty()) {
+                return std::nullopt;
+            }
+            msg.target = std::string(target);
+            msg.sender = std::string(sender);
+            msg.body = std::string(trim(msgBody));
+            return msg;
+        }
+        case MessageType::ROOMLIST:
+            if (rest.empty()) {
+                return std::nullopt;
+            }
+            msg.body = std::string(rest);
+            return msg;
     }
     return std::nullopt;
 }
 
+std::string serialize(const Message &msg){
+    switch (msg.type) {
+        case MessageType::OK:
+            return "OK " + msg.body + "\n";
+        case MessageType::ERR:
+            return "ERR " + msg.body + "\n";
+        case MessageType::BROADCAST:
+            return "BROADCAST " + msg.target + " " + msg.sender + " " + msg.body + "\n";
+        case MessageType::PRIVMSG:
+            return "PRIVMSG " + msg.target + " " + msg.sender + " " + msg.body + "\n";
+        case MessageType::ROOMLIST:
+            return "ROOMLIST " + msg.body + "\n";
+
+            // C→S types — server doesn't send these added them for prototyping
+        case MessageType::NICK:
+            return "NICK " + msg.body + "\n";
+        case MessageType::JOIN:
+            return "JOIN " + msg.target + "\n";
+        case MessageType::MSG:
+            return "MSG "  + msg.target + " " + msg.body + "\n";
+        case MessageType::DM:
+            return "DM "   + msg.target + " " + msg.body + "\n";
+        case MessageType::LIST:
+            return "LIST\n";
+        case MessageType::QUIT:
+            return "QUIT\n";
+    }
+    return "";
+}
 }  // namespace protocol
