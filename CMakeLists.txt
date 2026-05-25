@@ -63,7 +63,8 @@ add_executable(tests
         include/nickname_registry.h
         tests/test_nickname_registry.cpp
         src/dispatcher.cpp
-        include/dispatcher.h)
+        include/dispatcher.h
+        tests/test_dispatcher.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
