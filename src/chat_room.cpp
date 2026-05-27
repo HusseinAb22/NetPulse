@@ -64,3 +64,22 @@ void ChatRoom::broadcast(const Message &msg) const {
         }
     }
 }
+
+void ChatRoom::addToHistory(const Message &msg) {
+    std::unique_lock lock(mutex_);
+    history_.push_back(msg);
+    if (history_.size() > kHistoryLimit) {
+        history_.pop_front();  // bounded: drop the oldest
+    }
+}
+
+void ChatRoom::replayHistory(
+    const std::shared_ptr<ClientSession> &client) const {
+    if (!client) {
+        return;
+    }
+    std::shared_lock lock(mutex_);
+    for (const auto &msg : history_) {
+        client->deliver(msg);
+    }
+}
