@@ -1,8 +1,10 @@
 #include "../include/dispatcher.h"
-
+#include <sys/socket.h>
 #include <iostream>
 #include <utility>
+#include <optional>
 #include <chrono>
+
 namespace {
 constexpr std::size_t kMaxNickLen = 32;
 
@@ -24,10 +26,18 @@ void Dispatcher::registerSession(std::shared_ptr<ClientSession> session) {
     connections_[fd] = std::move(session);
 }
 
-void Dispatcher::run() {
-    while (true) {
-        const Message msg = inbox_.pop();
-        handle(msg);
+void Dispatcher::shutdownConnections() {
+    std::lock_guard lock(connections_mutex_);
+    for (const auto &[fd, session] : connections_) {
+        ::shutdown(fd, SHUT_RDWR);  // unblocks the reader's recv() on this fd
+    }
+}
+
+void Dispatcher::run(std::stop_token stop_token) {
+    // Drains until stop is requested; pop() returns nullopt once the token
+    // fires and the inbox is empty.
+    while (const std::optional<Message> msg = inbox_.pop(stop_token)) {
+        handle(*msg);
     }
 }
 

@@ -10,6 +10,7 @@
 #include "protocol.h"
 #include "socket_wrapper.h"
 #include "thread_safe_queue.h"
+#include <stop_token>
 class ClientSession {
 private:
     static constexpr std::size_t kMaxBufferBytes = 16 * 1024;
@@ -23,7 +24,7 @@ private:
 
     std::atomic<bool> alive_{true};
 
-    void writeLoop();
+    void writeLoop(std::stop_token stop_token);
 
 public:
     ClientSession(SocketWrapper client_sock,

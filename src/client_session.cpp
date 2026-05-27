@@ -4,7 +4,7 @@
 
 #include <cstring>
 #include <string>
-
+#include <optional>
 #include "../include/protocol.h"
 
 // Linux raises SIGPIPE on write to a half-closed socket; MSG_NOSIGNAL
@@ -18,7 +18,7 @@ ClientSession::ClientSession(SocketWrapper client_sock,
                              ThreadSafeQueue<Message> &server_inbox)
     : client_sock_(std::move(client_sock)),
       server_inbox_(server_inbox),
-      writer_thread_([this]() { writeLoop(); }) {
+      writer_thread_([this](std::stop_token st) { writeLoop(st); }) {
     std::cout << "new Client Session created!" << std::endl;
 }
 
@@ -26,19 +26,15 @@ void ClientSession::deliver(const Message &msg) {
     this->outbox_.push(msg);
 }
 
-void ClientSession::writeLoop() {
+void ClientSession::writeLoop(std::stop_token stop_token) {
     while (true) {
-        auto msg = this->outbox_.pop();
-
-        // QUIT is the poison pill pushed by the destructor to unblock this
-        // loop so the session can be torn down.
-        if (msg.type == MessageType::QUIT) {
-            break;
+        // Wakes on a delivered message or on the jthread's stop request.
+        const std::optional<Message> msg = outbox_.pop(stop_token);
+        if (!msg) {
+            break;  // stop requested and outbox drained -> shut the writer down
         }
 
-        // Serialize to the wire format (e.g. "BROADCAST #gen alice hi\n"),
-        // not just the body — the client parses whole protocol lines.
-        const std::string wire = protocol::serialize(msg);
+        const std::string wire = protocol::serialize(*msg);
         const std::size_t total = wire.size();
         std::size_t sent = 0;
         bool failed = false;
@@ -115,13 +111,4 @@ int ClientSession::getFd() const { return client_sock_.getFd(); }
 
 ClientSession::~ClientSession() noexcept {
     alive_ = false;
-    try{
-    Message poison;
-    poison.type = MessageType::QUIT;
-    poison.sender_fd = -1;
-    outbox_.push(poison);
-    }
-    catch (...) {
-        //std::cerr << "ClientSession Destructor : failed to push poison pill" << std::endl;
-    }
 }
