@@ -30,6 +30,10 @@ public:
     // Blocks forever, draining the inbox. (Graceful shutdown is Phase 4.)
     void run();
 
+    // Wakes every connected client by shutting down its socket, so the reader
+    // threads blocked in recv() return. Used during server shutdown.
+    void shutdownConnections();
+
     // Processes a single message. This is the unit-test seam: feed it Messages
     // with a sender_fd of a registered (mock) session and observe deliveries.
     void handle(const Message &msg);

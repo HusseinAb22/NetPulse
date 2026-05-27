@@ -1,7 +1,10 @@
 #include "../include/dispatcher.h"
-
+#include <sys/socket.h>
 #include <iostream>
 #include <utility>
+
+
+
 
 namespace {
 constexpr std::size_t kMaxNickLen = 32;
@@ -22,6 +25,13 @@ void Dispatcher::registerSession(std::shared_ptr<ClientSession> session) {
     const int fd = session->getFd();
     std::lock_guard lock(connections_mutex_);
     connections_[fd] = std::move(session);
+}
+
+void Dispatcher::shutdownConnections() {
+    std::lock_guard lock(connections_mutex_);
+    for (const auto &[fd, session] : connections_) {
+        ::shutdown(fd, SHUT_RDWR);  // unblocks the reader's recv() on this fd
+    }
 }
 
 void Dispatcher::run() {
