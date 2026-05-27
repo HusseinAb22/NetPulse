@@ -68,7 +68,8 @@ add_executable(tests
         include/dispatcher.h
         tests/test_dispatcher.cpp
         src/server.cpp
-        include/server.h)
+        include/server.h
+        tests/test_server.cpp)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
