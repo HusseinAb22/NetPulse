@@ -11,6 +11,7 @@
 #include "nickname_registry.h"
 #include "room_manager.h"
 #include "thread_safe_queue.h"
+#include <stop_token>
 
 // The Dispatcher is the server's single-threaded brain. Exactly one thread
 // runs run(), draining the shared inbox and processing one Message at a time.
@@ -28,7 +29,7 @@ public:
     void registerSession(std::shared_ptr<ClientSession> session);
 
     // Blocks forever, draining the inbox. (Graceful shutdown is Phase 4.)
-    void run();
+    void run(std::stop_token stop_token);
 
     // Wakes every connected client by shutting down its socket, so the reader
     // threads blocked in recv() return. Used during server shutdown.

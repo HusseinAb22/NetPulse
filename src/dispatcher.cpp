@@ -2,9 +2,7 @@
 #include <sys/socket.h>
 #include <iostream>
 #include <utility>
-
-
-
+#include <optional>
 
 namespace {
 constexpr std::size_t kMaxNickLen = 32;
@@ -34,10 +32,11 @@ void Dispatcher::shutdownConnections() {
     }
 }
 
-void Dispatcher::run() {
-    while (true) {
-        const Message msg = inbox_.pop();
-        handle(msg);
+void Dispatcher::run(std::stop_token stop_token) {
+    // Drains until stop is requested; pop() returns nullopt once the token
+    // fires and the inbox is empty.
+    while (const std::optional<Message> msg = inbox_.pop(stop_token)) {
+        handle(*msg);
     }
 }
 

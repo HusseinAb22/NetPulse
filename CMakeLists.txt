@@ -41,7 +41,9 @@ add_executable(netpulse src/main.cpp
         src/nickname_registry.cpp
         include/nickname_registry.h
         src/dispatcher.cpp
-        include/dispatcher.h)
+        include/dispatcher.h
+        src/server.cpp
+        include/server.h)
 
 add_executable(tests
         tests/test_thread_safe_queue.cpp
@@ -64,7 +66,9 @@ add_executable(tests
         tests/test_nickname_registry.cpp
         src/dispatcher.cpp
         include/dispatcher.h
-        tests/test_dispatcher.cpp)
+        tests/test_dispatcher.cpp
+        src/server.cpp
+        include/server.h)
 target_link_libraries(tests gtest_main gtest pthread)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
