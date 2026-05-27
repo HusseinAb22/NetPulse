@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <utility>
-
+#include <chrono>
 namespace {
 constexpr std::size_t kMaxNickLen = 32;
 
@@ -96,6 +96,12 @@ void Dispatcher::handleJoin(const Message &msg) {
     room.join(session);
     sendOk(msg.sender_fd, "joined " + msg.target);
 
+    // Replay recent history to the new joiner before announcing them, so they
+    // arrive with context. Delivered straight to this session, not via room
+    // membership.
+    room.replayHistory(session);
+
+
     // Announce the arrival to the rest of the room (the joiner is skipped via
     // sender_fd; they already got the OK above).
     const auto nick = registry_.nickFor(msg.sender_fd);
@@ -125,7 +131,10 @@ void Dispatcher::handleMsg(const Message &msg) {
     out.target = msg.target;
     out.sender = nick ? *nick : std::string("?");
     out.body = msg.body;
+    out.timestamp = std::chrono::system_clock::now();
     out.sender_fd = msg.sender_fd;  // room.broadcast skips the sender
+
+    room->addToHistory(out);
     room->broadcast(out);
 }
 

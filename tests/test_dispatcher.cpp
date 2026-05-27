@@ -28,6 +28,16 @@ bool hasType(const std::vector<Message> &msgs, MessageType type) {
                        [type](const Message &m) { return m.type == type; });
 }
 
+std::vector<Message> broadcastsOf(MockClientSession &m) {
+    std::vector<Message> out;
+    for (const auto &msg : received(m)) {
+        if (msg.type == MessageType::BROADCAST) {
+            out.push_back(msg);
+        }
+    }
+    return out;
+}
+
 Message from(int fd, MessageType type, std::string target, std::string body) {
     Message m;
     m.type = type;
@@ -252,4 +262,27 @@ TEST(DispatcherTest, QuitReleasesTheNickname) {
     auto msgs = received(*newcomer);
     ASSERT_EQ(msgs.size(), 1u);
     EXPECT_EQ(msgs[0].type, MessageType::OK);
+}
+
+TEST(DispatcherTest, LateJoinerReceivesHistory) {
+    ThreadSafeQueue<Message> inbox;
+    Dispatcher dispatcher(inbox);
+    auto alice = make_dummy_client(101);
+    dispatcher.registerSession(alice);
+    dispatcher.handle(from(101, MessageType::NICK, "", "alice"));
+    dispatcher.handle(from(101, MessageType::JOIN, "#general", ""));
+    dispatcher.handle(from(101, MessageType::MSG, "#general", "first"));
+    dispatcher.handle(from(101, MessageType::MSG, "#general", "second"));
+
+    auto bob = make_dummy_client(102);
+    dispatcher.registerSession(bob);
+    dispatcher.handle(from(102, MessageType::NICK, "", "bob"));
+    dispatcher.handle(from(102, MessageType::JOIN, "#general", ""));
+
+    auto bcasts = broadcastsOf(*bob);
+    ASSERT_EQ(bcasts.size(), 2u);
+    EXPECT_EQ(bcasts[0].body, "first");
+    EXPECT_EQ(bcasts[0].sender, "alice");
+    EXPECT_EQ(bcasts[0].target, "#general");
+    EXPECT_EQ(bcasts[1].body, "second");
 }
