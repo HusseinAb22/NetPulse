@@ -2,7 +2,7 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-
+#include <poll.h>
 #include <atomic>
 #include <csignal>
 #include <iostream>
@@ -13,20 +13,15 @@
 #include "../include/client_session.h"
 
 namespace {
-// Set by the SIGINT handler. A handler may only safely touch a lock-free atomic
-// and call async-signal-safe functions, so it does exactly two things: flip the
-// flag, and shut down the listen socket to wake accept() on whatever thread is
-// blocked in it.
+// Set by the SIGINT handler. A handler may only safely touch a lock-free
+// atomic, so it does exactly that. The accept loop polls with a short timeout
+// and notices the flag — we deliberately do NOT shutdown() the listen socket
+// to wake accept(), because that works on Linux but is a no-op on macOS/BSD.
 std::atomic<bool> g_shutdown{false};
-std::atomic<int> g_listen_fd{-1};
 }  // namespace
 
 extern "C" void netpulse_on_sigint(int /*signum*/) {
     g_shutdown.store(true);
-    const int fd = g_listen_fd.load();
-    if (fd >= 0) {
-        ::shutdown(fd, SHUT_RDWR);  // async-signal-safe; unblocks accept()
-    }
 }
 
 namespace {
@@ -65,7 +60,6 @@ Server::Server(std::uint16_t port)
 
 void Server::run() {
     std::signal(SIGPIPE, SIG_IGN);
-    g_listen_fd.store(listen_sock_.getFd());
     installSigintHandler();
 
     // The dispatcher's single thread; request_stop() at shutdown ends run().
@@ -76,12 +70,20 @@ void Server::run() {
               << std::endl;
 
     while (!g_shutdown.load()) {
+        // Poll with a short timeout so we periodically re-check g_shutdown.
+        // Portable wakeup: unlike shutdown() on a listening socket, poll()
+        // behaves the same on Linux and macOS.
+        struct pollfd pfd = {};
+        pfd.fd = listen_sock_.getFd();
+        pfd.events = POLLIN;
+        const int ready = ::poll(&pfd, 1, 500);
+        if (ready <= 0 || (pfd.revents & POLLIN) == 0) {
+            continue;  // timeout / EINTR / nothing incoming -> re-check the flag
+        }
+
         SocketWrapper client_sock(
             accept(listen_sock_.getFd(), nullptr, nullptr));
         if (!client_sock) {
-            if (g_shutdown.load()) {
-                break;  // listen socket was shut down by the signal handler
-            }
             std::cerr << "Error accepting client" << std::endl;
             continue;
         }
