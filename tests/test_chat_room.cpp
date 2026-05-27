@@ -8,6 +8,7 @@
 #include "../include/thread_safe_queue.h"
 #include <iostream>
 #include "test_helpers.h"
+#include <chrono>
 
 #if defined(__SANITIZE_THREAD__)
 #  define NETPULSE_UNDER_TSAN 1
@@ -187,4 +188,47 @@ TEST(ChatRoomTest, ConcurrentJoinLeaveBroadcast) {
     // Since every thread did exactly one join followed by one leave,
     // the room MUST be completely empty, with no crashes or data races.
     EXPECT_EQ(room.memberCount(), 0);
+}
+
+//
+
+TEST(ChatRoomTest, HistoryIsBoundedAndFifo) {
+    ChatRoom room("#x");
+    for (int i = 0; i < 55; ++i) {
+        Message m;
+        m.type = MessageType::BROADCAST;
+        m.target = "#x";
+        m.sender = "u";
+        m.body = "m" + std::to_string(i);
+        room.addToHistory(m);
+    }
+    auto sink = make_dummy_client(303);
+    room.replayHistory(sink);
+    ASSERT_EQ(sink->received_messages.size(), 50u);
+    EXPECT_EQ(sink->received_messages.front().body, "m5");   // m0..m4 evicted
+    EXPECT_EQ(sink->received_messages.back().body, "m54");
+}
+
+TEST(ChatRoomTest, HistoryPreservesTimestamp) {
+    ChatRoom room("#x");
+    Message m;
+    m.type = MessageType::BROADCAST;
+    m.target = "#x";
+    m.sender = "u";
+    m.body = "hi";
+    const auto stamp = std::chrono::system_clock::now() - std::chrono::hours(3);
+    m.timestamp = stamp;
+    room.addToHistory(m);
+
+    auto sink = make_dummy_client(304);
+    room.replayHistory(sink);
+    ASSERT_EQ(sink->received_messages.size(), 1u);
+    EXPECT_TRUE(sink->received_messages[0].timestamp == stamp);
+}
+
+TEST(ChatRoomTest, EmptyHistoryReplayIsNoop) {
+    ChatRoom room("#x");
+    auto sink = make_dummy_client(305);
+    room.replayHistory(sink);
+    EXPECT_TRUE(sink->received_messages.empty());
 }
