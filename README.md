@@ -15,7 +15,8 @@ A multi-threaded TCP chat server written in modern C++20: rooms, direct messages
 - **Graceful shutdown** on `SIGINT` — accept loop stops, dispatcher drains, every reader is woken, every thread is joined deterministically, no leaks
 - **Cross-platform** — builds and tests on Linux and macOS
 
-## At a glance
+## App Demo
+<img src="assets/demo.gif" width="720" alt="App Demo">
 
 ```text
 $ ./build/netpulse
