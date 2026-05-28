@@ -1,3 +1,7 @@
 plan.md
 .idea
+.github
 .DS_Store
+.venv
+cmake-build-debug
+build
